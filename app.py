@@ -15,7 +15,7 @@ if not st.session_state.authenticated:
     pwd = st.text_input("パスワードを入力してください", type="password")
     if pwd == PASSWORD:
         st.session_state.authenticated = True
-        st.experimental_rerun()
+        st.rerun()
     elif pwd:
         st.error("パスワードが違います")
     st.stop()
@@ -116,13 +116,13 @@ if st.session_state.mode is None:
     col1, col2, col3 = st.columns(3)
     if col1.button("首都クイズ"):
         st.session_state.mode = "capital"
-        st.experimental_rerun()
+        st.rerun()
     if col2.button("通貨クイズ"):
         st.session_state.mode = "currency"
-        st.experimental_rerun()
+        st.rerun()
     if col3.button("人口クイズ"):
         st.session_state.mode = "population"
-        st.experimental_rerun()
+        st.rerun()
     st.stop()
 
 # 背景色を設定
@@ -196,7 +196,7 @@ if st.session_state.question_num > MAX_QUESTIONS:
     if st.button("🔁 もう一度遊ぶ"):
         for key in ["mode", "score", "question_num", "question_row", "correct_countries"]:
             st.session_state[key] = None if key == "mode" else 0 if key == "score" else None
-        st.experimental_rerun()
+        st.rerun()
 
     st.stop()
 
@@ -231,7 +231,7 @@ if st.button("答える！"):
 
     st.session_state.question_row = df.sample(1).iloc[0]
     st.session_state.question_num += 1
-    st.experimental_rerun()
+    st.rerun()
 
 st.write("---")
 st.write(f"現在のスコア：{st.session_state.score} 点")

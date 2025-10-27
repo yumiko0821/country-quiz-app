@@ -3,113 +3,29 @@ import pandas as pd
 import random
 import base64
 import os
-from io import StringIO
+import io
 
 # ==============================
-# 📂 CSV読み込み関数（完全自動修正付き）
+# 📊 CSV読み込み関数（自動修正つき）
 # ==============================
 def load_country_data():
-    import io
-
-    with open("country_quiz.csv", "r", encoding="utf-8") as f:
-        content = f.read().strip()
-
-    # "国名,人口..." のように1行しかない場合 → 再読み込み
-    if content.startswith('"国名'):
-        lines = [line.strip('"') for line in content.splitlines()]
-        new_csv = "\n".join(lines)
-        df = pd.read_csv(io.StringIO(new_csv))
-    else:
-        df = pd.read_csv(io.StringIO(content))
-
-    df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
-    return df
-
     CSV_PATH = "country_quiz.csv"
 
     try:
-        # 通常読み込みを試す
-        df = pd.read_csv(CSV_PATH, encoding="utf-8")
-
-        # 列が1つしかなく、カンマが含まれている場合 → 再パース
-        if len(df.columns) == 1 and "," in df.columns[0]:
-            text = "\n".join(df.iloc[:, 0].astype(str))
-            df = pd.read_csv(StringIO(text), encoding="utf-8")
-
-        # 列数が合わない場合はトリミング
-        if len(df.columns) > 5:
-            df = df.iloc[:, :5]
-
-        # 列名を統一
-        df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
-
-        return df
-
-    except Exception as e:
-        st.error(f"CSV読み込みエラー: {e}")
-        st.stop()
-
-
-# ==============================
-# 🔐 パスワード保護
-# ==============================
-PASSWORD = "demo1030"
-
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-
-if not st.session_state.authenticated:
-    st.title("🌍 世界クイズへようこそ！")
-    pw = st.text_input("パスワードを入力してください", type="password")
-    if pw == PASSWORD:
-        st.session_state.authenticated = True
-        st.rerun()
-    elif pw:
-        st.error("パスワードが違います。")
-    st.stop()
-
-
-# ==============================
-# 🎵 音声再生関数
-# ==============================
-def play_sound(sound_file):
-    if os.path.exists(sound_file):
-        with open(sound_file, "rb") as f:
-            data = f.read()
-            b64 = base64.b64encode(data).decode()
-            md = f"""
-                <audio autoplay>
-                <source src="data:audio/wav;base64,{b64}" type="audio/wav">
-                </audio>
-            """
-            st.markdown(md, unsafe_allow_html=True)
-
-
-# ==============================
-# 📊 データ読み込み
-# ==============================
-def load_country_data():
-    import io
-    import pandas as pd
-
-    CSV_PATH = "country_quiz.csv"
-
-    try:
-        # ファイルをすべて読み込む
         with open(CSV_PATH, "r", encoding="utf-8") as f:
             content = f.read().strip()
 
-        # ダブルクォーテーションで囲まれている場合は除去して再整形
-        if content.startswith('"国名'):
+        # 1列にまとまっている（"国名,人口,..."）パターン対応
+        if content.startswith('"国名') or content.startswith("国名,"):
             lines = [line.strip('"') for line in content.splitlines()]
-            new_csv = "\n".join(lines)
-            df = pd.read_csv(io.StringIO(new_csv))
+            csv_text = "\n".join(lines)
+            df = pd.read_csv(io.StringIO(csv_text))
         else:
             df = pd.read_csv(io.StringIO(content))
 
-        # 列が正しく5つあるか確認
+        # 列数チェック
         if len(df.columns) != 5:
-            st.error(f"❌ CSV列数エラー: {len(df.columns)}列検出。5列（国名,人口,画像URL,首都,通貨）にしてください。")
+            st.error("❌ CSVの列数が5ではありません。")
             st.stop()
 
         df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
@@ -120,26 +36,8 @@ def load_country_data():
         st.stop()
 
 
-
-
 # ==============================
-# 🎨 ジャンル設定
-# ==============================
-genre_labels = {
-    "capital": "首都クイズ",
-    "currency": "通貨クイズ",
-    "population": "人口クイズ"
-}
-
-genre_colors = {
-    "capital": "#ccf2ff",
-    "currency": "#d9fcd9",
-    "population": "#fff2cc"
-}
-
-
-# ==============================
-# 🎯 クイズクラス
+# 🎯 クイズクラス定義
 # ==============================
 class QuizGame:
     def __init__(self, df):
@@ -190,17 +88,73 @@ class QuizGame:
 
 
 # ==============================
-# 🚀 Streamlit本体
+# 🔐 パスワード保護
+# ==============================
+PASSWORD = "demo1030"
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🌍 世界クイズへようこそ！")
+    pw = st.text_input("パスワードを入力してください", type="password")
+    if pw == PASSWORD:
+        st.session_state.authenticated = True
+        st.rerun()
+    elif pw:
+        st.error("パスワードが違います。")
+    st.stop()
+
+
+# ==============================
+# 🎵 音声再生関数
+# ==============================
+def play_sound(sound_file):
+    if os.path.exists(sound_file):
+        with open(sound_file, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio autoplay>
+                <source src="data:audio/wav;base64,{b64}" type="audio/wav">
+                </audio>
+            """
+            st.markdown(md, unsafe_allow_html=True)
+
+
+# ==============================
+# 🚀 Streamlitアプリ本体
 # ==============================
 st.set_page_config(page_title="世界クイズ", page_icon="🌍", layout="centered")
 
+# ✅ CSV読み込み
+df = load_country_data()
+
+# ✅ 初期化
 if "game" not in st.session_state:
     st.session_state.game = QuizGame(df)
 if "genre" not in st.session_state:
     st.session_state.genre = "capital"
 
-st.title("🌍 世界クイズ！")
+# ==============================
+# 🎨 ジャンル設定
+# ==============================
+genre_labels = {
+    "capital": "首都クイズ",
+    "currency": "通貨クイズ",
+    "population": "人口クイズ"
+}
 
+genre_colors = {
+    "capital": "#ccf2ff",
+    "currency": "#d9fcd9",
+    "population": "#fff2cc"
+}
+
+# ==============================
+# 🧠 ゲーム本体
+# ==============================
+st.title("🌍 世界クイズ！")
 genre = st.radio("ジャンルを選んでね", ["capital", "currency", "population"],
                  format_func=lambda x: genre_labels[x])
 
@@ -216,14 +170,12 @@ question = game.generate_question(genre)
 st.subheader(f"第 {game.current_question + 1} 問")
 st.write(f"🌏 この国はどこ？ → **{question['country']}**")
 
-# 画像表示（ローカル or URL対応）
+# 画像表示（存在チェックあり）
 image_url = question["image"]
-if isinstance(image_url, str):
-    if os.path.exists(image_url):
-        st.image(image_url, width=300)
-    else:
-        st.image(image_url, width=300)  # URLの場合
+if isinstance(image_url, str) and os.path.exists(image_url):
+    st.image(image_url, width=300)
 else:
+    st.warning(f"⚠️ 画像が見つかりませんでした：{image_url}")
     st.image("images/no_image.png", width=300)
 
 answer = st.radio("答えを選んでください：", question["choices"])
@@ -246,13 +198,13 @@ if st.button("回答！"):
         play_sound("fanfare.wav")
         st.write(f"あなたのスコアは {game.score}/{game.total_questions} 点！")
 
-        if game.score >= 9:
+        if game.score == game.total_questions:
             comment = "🌟 パーフェクト！世界マスター！"
             image_path = game.result_images["perfect"]
-        elif game.score >= 6:
+        elif game.score >= 4:
             comment = "👍 よくできました！あと少しで満点！"
             image_path = game.result_images["good"]
-        elif game.score >= 3:
+        elif game.score >= 2:
             comment = "🙂 まずまず！次はもっと高得点を目指そう！"
             image_path = game.result_images["average"]
         else:
@@ -264,4 +216,4 @@ if st.button("回答！"):
 
         if st.button("🔁 もう一度遊ぶ"):
             st.session_state.game = QuizGame(df)
-            st.rerun()
+            st.experimental_rerun()

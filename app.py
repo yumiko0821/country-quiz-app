@@ -169,19 +169,24 @@ st.set_page_config(page_title="世界クイズ", page_icon="🌍", layout="cente
 df = load_country_data("country_quiz.csv")
 
 # show debug info (only when needed) -- comment out later
-st.write(f"データ行数: {len(df)} / 列: {list(df.columns)}")
+# st.write(f"データ行数: {len(df)} / 列: {list(df.columns)}")  # ← デバッグ表示をオフにする
 
 # init session
 if "game" not in st.session_state:
     st.session_state.game = QuizGame(df)
 
 genre_labels = {"capital": "首都クイズ", "currency": "通貨クイズ", "population": "人口クイズ"}
-genre_colors = {"capital": "#ccf2ff", "currency": "#d9fcd9", "population": "#fff2cc"}
+genre_colors = {"capital": "#180B4A", "currency": "#024E1B", "population": "#f1c542"}
 
 st.title("🌍 世界クイズ！")
 genre = st.radio("ジャンルを選んでね", ["capital", "currency", "population"], format_func=lambda x: genre_labels[x])
 
-st.markdown(f"<div style='background-color:{genre_colors[genre]};padding:10px;border-radius:10px;'><h3 style='text-align:center;'>{genre_labels[genre]}</h3></div>", unsafe_allow_html=True)
+st.markdown(
+    f"<div style='background-color:{genre_colors[genre]};padding:10px;border-radius:10px;'>"
+    f"<h3 style='text-align:center;color:white;'>{genre_labels[genre]}</h3></div>",
+    unsafe_allow_html=True
+)
+
 
 game = st.session_state.game
 question = game.generate_question(genre)
@@ -208,19 +213,57 @@ answer = st.radio("答えを選んでください：", question["choices"])
 if st.button("回答！"):
     if answer == question["correct"]:
         st.success("✅ 正解！")
-        try:
-            st.image(game.feedback_images["correct"], width=150)
-        except Exception:
-            pass
+
+        # 🎵 正解音を再生
         play_sound("correct.wav")
+
+        # 🌟 ふわっと出るスタンプ（CSSアニメーション付き）
+        st.markdown("""
+            <style>
+            @keyframes fadeInOut {
+                0% {opacity: 0; transform: scale(0.5);}
+                30% {opacity: 1; transform: scale(1.1);}
+                70% {opacity: 1; transform: scale(1.0);}
+                100% {opacity: 0; transform: scale(0.5);}
+            }
+            .stamp {
+                animation: fadeInOut 1.5s ease-in-out;
+                text-align: center;
+            }
+            </style>
+            <div class="stamp">
+                <img src="images/correct_stamp.png" width="200">
+            </div>
+        """, unsafe_allow_html=True)
+
         game.score += 1
+
     else:
         st.error(f"❌ 不正解！正解は「{question['correct']}」です。")
-        try:
-            st.image(game.feedback_images["wrong"], width=150)
-        except Exception:
-            pass
+
+        # 🎵 不正解音を再生
         play_sound("wrong.wav")
+
+        # 💥 不正解スタンプ（同じくふわっと消える）
+        st.markdown("""
+            <style>
+            @keyframes fadeInOut {
+                0% {opacity: 0; transform: scale(0.5);}
+                30% {opacity: 1; transform: scale(1.1);}
+                70% {opacity: 1; transform: scale(1.0);}
+                100% {opacity: 0; transform: scale(0.5);}
+            }
+            .stamp {
+                animation: fadeInOut 1.5s ease-in-out;
+                text-align: center;
+            }
+            </style>
+            <div class="stamp">
+                <img src="images/wrong_stamp.png" width="200">
+            </div>
+        """, unsafe_allow_html=True)
+
+
 
     game.current_question += 1
 

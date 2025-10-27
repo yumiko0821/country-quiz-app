@@ -272,7 +272,8 @@ st.session_state.game.set_category(genre)
 question = st.session_state.game.get_question()
 
 game = st.session_state.game
-question = game.generate_question(genre)
+game.set_category(genre)
+question = game.get_question()
 
 st.subheader(f"第 {game.current_question + 1} 問")
 st.write(f"🌏 この国はどこ？ → **{question['country']}**")

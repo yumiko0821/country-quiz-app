@@ -90,20 +90,35 @@ def play_sound(sound_file):
 # ==============================
 def load_country_data():
     import io
+    import pandas as pd
 
-    with open("country_quiz.csv", "r", encoding="utf-8") as f:
-        content = f.read().strip()
+    CSV_PATH = "country_quiz.csv"
 
-    # "国名,人口..." のように1行しかない場合 → 再読み込み
-    if content.startswith('"国名'):
-        lines = [line.strip('"') for line in content.splitlines()]
-        new_csv = "\n".join(lines)
-        df = pd.read_csv(io.StringIO(new_csv))
-    else:
-        df = pd.read_csv(io.StringIO(content))
+    try:
+        # ファイルをすべて読み込む
+        with open(CSV_PATH, "r", encoding="utf-8") as f:
+            content = f.read().strip()
 
-    df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
-    return df
+        # ダブルクォーテーションで囲まれている場合は除去して再整形
+        if content.startswith('"国名'):
+            lines = [line.strip('"') for line in content.splitlines()]
+            new_csv = "\n".join(lines)
+            df = pd.read_csv(io.StringIO(new_csv))
+        else:
+            df = pd.read_csv(io.StringIO(content))
+
+        # 列が正しく5つあるか確認
+        if len(df.columns) != 5:
+            st.error(f"❌ CSV列数エラー: {len(df.columns)}列検出。5列（国名,人口,画像URL,首都,通貨）にしてください。")
+            st.stop()
+
+        df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
+        return df
+
+    except Exception as e:
+        st.error(f"❌ CSV読み込みエラー: {e}")
+        st.stop()
+
 
 
 

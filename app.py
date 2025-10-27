@@ -24,8 +24,8 @@ IMAGE_FALLBACK = "no_image.png"
 
 # フィードバック画像 / 結果画像パス
 FEEDBACK_IMAGES = {
-    "correct": st.image(path("images/correct_stamp.png")),
-    "wrong": st.image(path("images/wrong_stamp.png"))
+    "correct": path("correct_stamp.png"),
+    "wrong": path("wrong_stamp.png")
 }
 RESULT_IMAGES = {
     "perfect": "j428_7_1.png",

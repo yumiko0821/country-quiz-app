@@ -152,84 +152,35 @@ class QuizGame:
         self.category = category
 
     def get_question(self):
-        """ジャンルに応じた問題を生成"""
-        question_data = self.df.sample(1).iloc[0]
-        country = question_data["国名"]
+        question = self.df.sample(1).iloc[0]
+        country_name = question["国名"]
 
-        if self.category == "population":
-            question_text = f"🌍 {country}の人口は次のうちどれ？"
-            correct = str(question_data["人口"])
-            options = list(self.df["人口"].dropna().astype(str).sample(3))
+        if self.category == "capital":
+            text = f"{country_name} の首都は次のうちどれ？"
+            correct_answer = question["首都"]
+            choices = list(self.df["首都"].dropna().sample(3))
         elif self.category == "currency":
-            question_text = f"💰 {country}の通貨は次のうちどれ？"
-            correct = question_data["通貨"]
-            options = list(self.df["通貨"].dropna().sample(3))
-        elif self.category == "capital":
-            question_text = f"🏙️ {country}の首都は次のうちどれ？"
-            correct = question_data["首都"]
-            options = list(self.df["首都"].dropna().sample(3))
+              text = f"{country_name} の通貨は次のうちどれ？"
+              correct_answer = question["通貨"]
+              choices = list(self.df["通貨"].dropna().sample(3))
         else:
-            question_text = f"{country}についてのクイズです！"
-            correct = None
-            options = []
+             text = f"{country_name} の人口は次のうちどれ？"
+             correct_answer = str(question["人口"])
+             choices = list(self.df["人口"].dropna().astype(str).sample(3))
 
-        if correct not in options:
-            options.append(correct)
-        random.shuffle(options)
+        if correct_answer not in choices:
+            choices.append(correct_answer)
+        random.shuffle(choices)
 
         return {
-            "text": question_text,
-            "correct": correct,
-            "options": options,
-            "image": question_data["画像URL"]
+            "country": country_name,
+            "text": text,
+            "choices": choices,
+            "correct": correct_answer,
+            "image": question["画像URL"]
         }
 
 
-class QuizGame:
-    def __init__(self, df):
-        self.df = df
-        self.current_question = 0
-        self.score = 0
-        self.total_questions = 10
-        self.category = None  # 'population', 'currency', 'capital' など
-        self.result_images = {
-            "perfect": "images/result_perfect.png",
-            "good": "images/result_good.png",
-            "average": "images/result_average.png",
-            "low": "images/result_low.png",
-        }
-
-    def set_category(self, category):
-        self.category = category
-
-    def get_question(self):
-    question = self.df.sample(1).iloc[0]
-    country_name = question["国名"]
-
-    if self.category == "capital":
-        text = f"{country_name} の首都は次のうちどれ？"
-        correct_answer = question["首都"]
-        choices = list(self.df["首都"].dropna().sample(3))
-    elif self.category == "currency":
-        text = f"{country_name} の通貨は次のうちどれ？"
-        correct_answer = question["通貨"]
-        choices = list(self.df["通貨"].dropna().sample(3))
-    else:
-        text = f"{country_name} の人口は次のうちどれ？"
-        correct_answer = str(question["人口"])
-        choices = list(self.df["人口"].dropna().astype(str).sample(3))
-
-    if correct_answer not in choices:
-        choices.append(correct_answer)
-    random.shuffle(choices)
-
-    return {
-        "country": country_name,  # ← これを追加！
-        "text": text,
-        "choices": choices,
-        "correct": correct_answer,
-        "image": question["画像URL"]
-    }
 
 
         # 重複を防いでシャッフル

@@ -110,7 +110,15 @@ if st.session_state.q_index < 5:
     country_name = q["国名"]
     image_url = q["画像URL"]
 
+import os
+
+# 画像の存在確認とフォールバック処理
+if isinstance(image_url, str) and os.path.exists(image_url):
     st.image(image_url, width=300)
+else:
+    st.warning(f"⚠️ 画像が見つかりませんでした：{image_url}")
+    st.image("images/no_image.png", width=300)
+
     st.subheader(question)
     choice = st.radio("選択肢：", options)
 

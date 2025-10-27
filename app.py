@@ -26,7 +26,7 @@ IMAGE_FALLBACK = "no_image.png"
 FEEDBACK_IMAGES = {
     "correct": st.image(path("images/correct_stamp.png")),
     "wrong": st.image(path("images/wrong_stamp.png"))
-    
+}
 RESULT_IMAGES = {
     "perfect": "j428_7_1.png",
     "good": "j428_6_1.png",

@@ -7,6 +7,12 @@ import os
 import io
 import csv
 
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+def path(*parts):
+    return os.path.join(BASE_DIR, *parts)
+
+
 # ------------------------------
 # 設定
 # ------------------------------
@@ -15,10 +21,11 @@ CSV_PATH = "country_quiz.csv"
 TOTAL_QUESTIONS = 5  # 出題数（必要なら変更）
 IMAGE_FALLBACK = "no_image.png"
 
+
 # フィードバック画像 / 結果画像パス
 FEEDBACK_IMAGES = {
-    "correct": "correct_stamp.png",
-    "wrong": "wrong_stamp.png"
+    "correct": path("correct_stamp.png"),
+    "wrong": path("wrong_stamp.png")
 }
 RESULT_IMAGES = {
     "perfect": "j428_7_1.png",

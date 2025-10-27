@@ -13,18 +13,18 @@ import csv
 PASSWORD = "demo1030"
 CSV_PATH = "country_quiz.csv"
 TOTAL_QUESTIONS = 5  # 出題数（必要なら変更）
-IMAGE_FALLBACK = "images/no_image.png"
+IMAGE_FALLBACK = "no_image.png"
 
 # フィードバック画像 / 結果画像パス
 FEEDBACK_IMAGES = {
-    "correct": "images/correct_stamp.png",
-    "wrong": "images/wrong_stamp.png"
+    "correct": "correct_stamp.png",
+    "wrong": "wrong_stamp.png"
 }
 RESULT_IMAGES = {
-    "perfect": "images/j428_7_1.png",
-    "good": "images/j428_6_1.png",
-    "average": "images/j428_6_2.png",
-    "low": "images/j428_7_2.png"
+    "perfect": "j428_7_1.png",
+    "good": "j428_6_1.png",
+    "average": "j428_6_2.png",
+    "low": "j428_7_2.png"
 }
 
 # ジャンル表示ラベル & 色（濃めにして白文字を映えさせる）
@@ -128,13 +128,13 @@ def play_sound(sound_path):
 # ------------------------------
 # セットアップ / 認証
 # ------------------------------
-st.set_page_config(page_title="世界クイズ", page_icon="🌍", layout="centered")
+st.set_page_config(page_title="地理クイズ", page_icon="🌍", layout="centered")
 
 # パスワード認証（セッション）
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if not st.session_state.authenticated:
-    st.title("🌍 世界クイズへようこそ！")
+    st.title("🌍 地理クイズへようこそ！")
     pw = st.text_input("パスワードを入力してください", type="password", key="pw_input")
     if pw:
         if pw == PASSWORD:
@@ -166,7 +166,7 @@ if "question_indices" not in st.session_state:
 # ------------------------------
 # UI: ジャンル選択（ジャンル変更でリセット）
 # ------------------------------
-st.title("🌍 世界クイズ！")
+st.title("🌍 地理クイズ！")
 genre = st.radio("ジャンルを選んでね", ["capital", "currency", "population"], format_func=lambda x: GENRE_LABELS[x], key="genre_radio")
 
 # ジャンル色（見やすく）

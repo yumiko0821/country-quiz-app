@@ -210,41 +210,28 @@ else:
 
 answer = st.radio("答えを選んでください：", question["choices"])
 
+# セッション状態の初期化
+if "show_feedback" not in st.session_state:
+    st.session_state.show_feedback = False
+if "last_answer_correct" not in st.session_state:
+    st.session_state.last_answer_correct = None
+
+# 回答ボタン
 if st.button("回答！"):
-    if answer == question["correct"]:
-        st.success("✅ 正解！")
+    st.session_state.show_feedback = True
+    st.session_state.last_answer_correct = (answer == question["correct"])
 
-        # 🎵 正解音を再生
+    # 正解・不正解判定
+    if st.session_state.last_answer_correct:
         play_sound("correct.wav")
-
-        # 🌟 ふわっと出るスタンプ（CSSアニメーション付き）
-        st.markdown("""
-            <style>
-            @keyframes fadeInOut {
-                0% {opacity: 0; transform: scale(0.5);}
-                30% {opacity: 1; transform: scale(1.1);}
-                70% {opacity: 1; transform: scale(1.0);}
-                100% {opacity: 0; transform: scale(0.5);}
-            }
-            .stamp {
-                animation: fadeInOut 1.5s ease-in-out;
-                text-align: center;
-            }
-            </style>
-            <div class="stamp">
-                <img src="images/correct_stamp.png" width="200">
-            </div>
-        """, unsafe_allow_html=True)
-
         game.score += 1
-
     else:
-        st.error(f"❌ 不正解！正解は「{question['correct']}」です。")
-
-        # 🎵 不正解音を再生
         play_sound("wrong.wav")
 
-        # 💥 不正解スタンプ（同じくふわっと消える）
+# 回答後の表示処理
+if st.session_state.show_feedback:
+    if st.session_state.last_answer_correct:
+        st.success("✅ 正解！")
         st.markdown("""
             <style>
             @keyframes fadeInOut {
@@ -253,15 +240,40 @@ if st.button("回答！"):
                 70% {opacity: 1; transform: scale(1.0);}
                 100% {opacity: 0; transform: scale(0.5);}
             }
-            .stamp {
-                animation: fadeInOut 1.5s ease-in-out;
-                text-align: center;
-            }
+            .stamp {animation: fadeInOut 1.5s ease-in-out; text-align: center;}
             </style>
-            <div class="stamp">
-                <img src="images/wrong_stamp.png" width="200">
-            </div>
+            <div class="stamp"><img src="images/correct_stamp.png" width="200"></div>
         """, unsafe_allow_html=True)
+    else:
+        st.error(f"❌ 不正解！正解は「{question['correct']}」です。")
+        st.markdown("""
+            <style>
+            @keyframes fadeInOut {
+                0% {opacity: 0; transform: scale(0.5);}
+                30% {opacity: 1; transform: scale(1.1);}
+                70% {opacity: 1; transform: scale(1.0);}
+                100% {opacity: 0; transform: scale(0.5);}
+            }
+            .stamp {animation: fadeInOut 1.5s ease-in-out; text-align: center;}
+            </style>
+            <div class="stamp"><img src="images/wrong_stamp.png" width="200"></div>
+        """, unsafe_allow_html=True)
+
+    # 1.5秒待ってから次の問題へ
+    import time
+    time.sleep(1.5)
+
+    st.session_state.show_feedback = False
+    game.current_question += 1
+
+    # クイズ終了時
+    if game.current_question >= game.total_questions:
+        st.subheader("🎉 クイズ終了！")
+        play_sound("fanfare.wav")
+        st.write(f"あなたのスコアは {game.score}/{game.total_questions} 点！")
+    else:
+        st.experimental_rerun()
+
 
 
 

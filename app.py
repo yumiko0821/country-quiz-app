@@ -33,6 +33,25 @@ def load_country_data():
         st.error(f"CSV読み込みエラー: {e}")
         st.stop()
 
+def load_country_data():
+    try:
+        df = pd.read_csv("country_quiz.csv", encoding="utf-8")
+
+        # 列が1つしかなく、カンマが含まれていたら再パース
+        if len(df.columns) == 1 and "," in df.columns[0]:
+            from io import StringIO
+            csv_text = "\n".join(df.iloc[:, 0].astype(str))
+            df = pd.read_csv(StringIO(csv_text), encoding="utf-8")
+
+        # 列名を統一
+        df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
+
+        return df
+
+    except Exception as e:
+        st.error(f"CSV読み込みエラー: {e}")
+        st.stop()
+
 
 # ==============================
 # 🔐 パスワード保護

@@ -124,6 +124,67 @@ def play_sound(sound_file):
 # ==============================
 # 🎯 Quiz クラス定義
 # ==============================
+# ==============================
+# 🎯 ゲーム設定
+# ==============================
+class QuizGame:
+    def __init__(self, df):
+        self.df = df
+        self.score = 0
+        self.total_questions = 5
+        self.current_question = 0
+        self.category = None  # ← 選択ジャンルを保持
+
+        self.feedback_images = {
+            "correct": "images/correct_stamp.png",
+            "wrong": "images/wrong_stamp.png"
+        }
+
+        self.result_images = {
+            "perfect": "images/j428_7_1.png",
+            "good": "images/j428_6_1.png",
+            "average": "images/j428_6_2.png",
+            "low": "images/j428_7_2.png"
+        }
+
+    def set_category(self, category):
+        """ジャンルを設定"""
+        self.category = category
+
+    def get_question(self):
+        """ジャンルに応じた問題を生成"""
+        question_data = self.df.sample(1).iloc[0]
+        country = question_data["国名"]
+
+        if self.category == "population":
+            question_text = f"🌍 {country}の人口は次のうちどれ？"
+            correct = str(question_data["人口"])
+            options = list(self.df["人口"].dropna().astype(str).sample(3))
+        elif self.category == "currency":
+            question_text = f"💰 {country}の通貨は次のうちどれ？"
+            correct = question_data["通貨"]
+            options = list(self.df["通貨"].dropna().sample(3))
+        elif self.category == "capital":
+            question_text = f"🏙️ {country}の首都は次のうちどれ？"
+            correct = question_data["首都"]
+            options = list(self.df["首都"].dropna().sample(3))
+        else:
+            question_text = f"{country}についてのクイズです！"
+            correct = None
+            options = []
+
+        if correct not in options:
+            options.append(correct)
+        random.shuffle(options)
+
+        return {
+            "text": question_text,
+            "correct": correct,
+            "options": options,
+            "image": question_data["画像URL"]
+        }
+
+
 class QuizGame:
     def __init__(self, df):
         self.df = df
@@ -204,7 +265,11 @@ st.markdown(
     f"<h3 style='text-align:center;color:white;'>{genre_labels[genre]}</h3></div>",
     unsafe_allow_html=True
 )
+# 選んだジャンルをクラスにセット
+st.session_state.game.set_category(genre)
 
+# 問題生成（←ここを修正）
+question = st.session_state.game.get_question()
 
 game = st.session_state.game
 question = game.generate_question(genre)

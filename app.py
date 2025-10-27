@@ -4,6 +4,36 @@ import random
 import base64
 import os
 
+def load_country_data():
+    import pandas as pd
+    import io
+
+    try:
+        # CSV 読み込み（カンマのズレを自動で修正）
+        df = pd.read_csv("country_quiz.csv", encoding="utf-8", on_bad_lines="skip")
+
+        # ヘッダーが1行にまとまっている場合の修正
+        if len(df.columns) == 1 and "," in df.columns[0]:
+            df = pd.read_csv(io.StringIO(open("country_quiz.csv", encoding="utf-8").read()), 
+                             encoding="utf-8", header=None)
+            df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
+
+        # 列数が5でない場合はトリミング
+        elif len(df.columns) > 5:
+            df = df.iloc[:, :5]
+            df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
+
+        elif len(df.columns) < 5:
+            st.error("❌ CSVの列数が足りません。5列（国名,人口,画像URL,首都,通貨）に修正してください。")
+            st.stop()
+
+        return df
+
+    except Exception as e:
+        st.error(f"CSV読み込みエラー: {e}")
+        st.stop()
+
+
 # ==============================
 # 🔐 パスワード保護
 # ==============================

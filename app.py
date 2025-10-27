@@ -9,6 +9,22 @@ from io import StringIO
 # 📂 CSV読み込み関数（完全自動修正付き）
 # ==============================
 def load_country_data():
+    import io
+
+    with open("country_quiz.csv", "r", encoding="utf-8") as f:
+        content = f.read().strip()
+
+    # "国名,人口..." のように1行しかない場合 → 再読み込み
+    if content.startswith('"国名'):
+        lines = [line.strip('"') for line in content.splitlines()]
+        new_csv = "\n".join(lines)
+        df = pd.read_csv(io.StringIO(new_csv))
+    else:
+        df = pd.read_csv(io.StringIO(content))
+
+    df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
+    return df
+
     CSV_PATH = "country_quiz.csv"
 
     try:
@@ -72,7 +88,23 @@ def play_sound(sound_file):
 # ==============================
 # 📊 データ読み込み
 # ==============================
-df = load_country_data()
+def load_country_data():
+    import io
+
+    with open("country_quiz.csv", "r", encoding="utf-8") as f:
+        content = f.read().strip()
+
+    # "国名,人口..." のように1行しかない場合 → 再読み込み
+    if content.startswith('"国名'):
+        lines = [line.strip('"') for line in content.splitlines()]
+        new_csv = "\n".join(lines)
+        df = pd.read_csv(io.StringIO(new_csv))
+    else:
+        df = pd.read_csv(io.StringIO(content))
+
+    df.columns = ["国名", "人口", "画像URL", "首都", "通貨"]
+    return df
+
 
 
 # ==============================

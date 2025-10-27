@@ -7,10 +7,17 @@ import os
 import io
 import csv
 
-import os
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-def path(*parts):
-    return os.path.join(BASE_DIR, *parts)
+def show_feedback(is_correct):
+    """正解・不正解スタンプを表示するだけ"""
+    if is_correct:
+        image_path = "images/correct_stamp.png"
+    else:
+        image_path = "images/wrong_stamp.png"
+
+    if os.path.exists(image_path):
+        st.image(image_path, width=180)
+    else:
+        st.warning(f"⚠️ スタンプ画像が見つかりません: {image_path}")
 
 
 # ------------------------------
@@ -276,68 +283,22 @@ selected = st.radio("選択肢：", q["choices"], key=choice_key)
 # ------------------------------
 # 回答処理（回答後は結果を表示し、次へはボタンで進む）
 # ------------------------------
-answer_btn_key = f"answer_btn_{st.session_state.qpos}"
-next_btn_key = f"next_btn_{st.session_state.qpos}"
+if st.button("回答！"):
+    if answer == question["correct"]:
+        st.success("✅ 正解！")
+        show_feedback(True)
+        play_sound("correct.wav")
+        game.score += 1
+    else:
+        st.error(f"❌ 不正解！正解は「{question['correct']}」です。")
+        show_feedback(False)
+        play_sound("wrong.wav")
 
-if not st.session_state.answered:
-    if st.button("回答！", key=answer_btn_key):
-        # 回答処理
-        is_correct = (str(selected) == str(q["correct"]))
-        st.session_state.answered = True
-        st.session_state.last_correct = is_correct
-        if is_correct:
-            st.success("✅ 正解！")
-            if os.path.exists(FEEDBACK_IMAGES["correct"]):
-                # CSSアニメでふわっと出す（HTML挿入）
-                st.markdown(
-                    """
-                    <style>
-                    @keyframes fadeInOut {
-                        0% {opacity: 0; transform: scale(0.6);}
-                        30% {opacity: 1; transform: scale(1.05);}
-                        70% {opacity: 1; transform: scale(1.0);}
-                        100% {opacity: 0; transform: scale(0.6);}
-                    }
-                    .stamp {animation: fadeInOut 1.2s ease-in-out; text-align:center; margin-top:10px;}
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                st.markdown(f"<div class='stamp'><img src='{FEEDBACK_IMAGES['correct']}' width='200'></div>", unsafe_allow_html=True)
-            play_sound("correct.wav")
-            st.session_state.score += 1
-        else:
-            st.error(f"❌ 不正解！ 正解は「{q['correct']}」です。")
-            if os.path.exists(FEEDBACK_IMAGES["wrong"]):
-                st.markdown(
-                    """
-                    <style>
-                    @keyframes fadeInOut {
-                        0% {opacity: 0; transform: scale(0.6);}
-                        30% {opacity: 1; transform: scale(1.05);}
-                        70% {opacity: 1; transform: scale(1.0);}
-                        100% {opacity: 0; transform: scale(0.6);}
-                    }
-                    .stamp {animation: fadeInOut 1.2s ease-in-out; text-align:center; margin-top:10px;}
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
-                )
-                st.markdown(f"<div class='stamp'><img src='{FEEDBACK_IMAGES['wrong']}' width='200'></div>", unsafe_allow_html=True)
-            play_sound("wrong.wav")
+    game.next_question()
 
-# 回答済みなら「次へ」か終了処理のUIを出す
-if st.session_state.answered:
-    if st.session_state.qpos + 1 < len(st.session_state.question_indices):
-        if st.button("➡️ 次の問題へ", key=next_btn_key):
-            # 次の問題へ：qpos を進めて current_question を差し替え
-            st.session_state.qpos += 1
-            idx = st.session_state.question_indices[st.session_state.qpos]
-            st.session_state.current_question = make_question_from_index(idx, genre)
-            st.session_state.answered = False
-            st.session_state.last_correct = None
-            # ラジオ選択の key が変わるので自動で選択肢は新しくなる
-            st.rerun()
+    if game.current_q >= game.total_q:
+        st.session_state["page"] = "result"
+        st.experimental_rerun()
     else:
         # 最終問題を回答済み → 結果表示
         st.markdown("---")

@@ -102,7 +102,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    st.title("🌍 世界クイズへようこそ！")
+    st.title("🌍 地理クイズへようこそ！")
     pw = st.text_input("パスワードを入力してください", type="password")
     if pw == PASSWORD:
         st.session_state.authenticated = True
@@ -127,43 +127,61 @@ def play_sound(sound_file):
 class QuizGame:
     def __init__(self, df):
         self.df = df
-        self.score = 0
-        self.total_questions = 5
         self.current_question = 0
-        self.feedback_images = {"correct": "images/correct_stamp.png", "wrong": "images/wrong_stamp.png"}
+        self.score = 0
+        self.total_questions = 10
+        self.category = None  # 'population', 'currency', 'capital' など
         self.result_images = {
-            "perfect": "images/j428_7_1.png",
-            "good": "images/j428_6_1.png",
-            "average": "images/j428_6_2.png",
-            "low": "images/j428_7_2.png",
+            "perfect": "images/result_perfect.png",
+            "good": "images/result_good.png",
+            "average": "images/result_average.png",
+            "low": "images/result_low.png",
         }
 
-    def generate_question(self, genre):
-        question = self.df.sample(1).iloc[0]
-        country_name = question["国名"]
-        correct_answer = ""
-        choices = []
+    def set_category(self, category):
+        self.category = category
 
-        if genre == "capital":
-            correct_answer = question["首都"]
-            choices = list(self.df["首都"].dropna().sample(3))
-        elif genre == "currency":
-            correct_answer = question["通貨"]
-            choices = list(self.df["通貨"].dropna().sample(3))
-        elif genre == "population":
-            correct_answer = str(question["人口"])
-            choices = list(self.df["人口"].dropna().astype(str).sample(3))
+    def get_question(self):
+        question_data = self.df.sample(1).iloc[0]
+        country = question_data["国名"]
 
-        if correct_answer not in choices:
-            choices.append(correct_answer)
-        random.shuffle(choices)
+        if self.category == "人口":
+            question_text = f"🌍 {country}の人口は次のうちどれ？"
+            correct = question_data["人口"]
+            options = self.df["人口"].sample(3).tolist() + [correct]
 
-        return {"country": country_name, "correct": correct_answer, "choices": choices, "genre": genre, "image": question["画像URL"]}
+        elif self.category == "通貨":
+            question_text = f"💰 {country}の通貨は次のうちどれ？"
+            correct = question_data["通貨"]
+            options = self.df["通貨"].sample(3).tolist() + [correct]
+
+        elif self.category == "首都":
+            question_text = f"🏙️ {country}の首都は次のうちどれ？"
+            correct = question_data["首都"]
+            options = self.df["首都"].sample(3).tolist() + [correct]
+
+        else:
+            question_text = f"{country}についてのクイズです！"
+            correct = None
+            options = []
+
+        # 重複を防いでシャッフル
+        options = list(set(options))
+        random.shuffle(options)
+
+        return {
+            "text": question_text,
+            "correct": correct,
+            "options": options,
+            "image": question_data["画像URL"],
+        }
+
+
 
 # ==============================
 # 🚀 Streamlit 本体
 # ==============================
-st.set_page_config(page_title="世界クイズ", page_icon="🌍", layout="centered")
+st.set_page_config(page_title="地理クイズ", page_icon="🌍", layout="centered")
 
 # load data
 df = load_country_data("country_quiz.csv")
@@ -178,7 +196,7 @@ if "game" not in st.session_state:
 genre_labels = {"capital": "首都クイズ", "currency": "通貨クイズ", "population": "人口クイズ"}
 genre_colors = {"capital": "#180B4A", "currency": "#024E1B", "population": "#f1c542"}
 
-st.title("🌍 世界クイズ！")
+st.title("🌍 地理クイズ！")
 genre = st.radio("ジャンルを選んでね", ["capital", "currency", "population"], format_func=lambda x: genre_labels[x])
 
 st.markdown(
@@ -229,9 +247,18 @@ if st.button("回答！"):
         play_sound("wrong.wav")
 
 # 回答後の表示処理
-if st.session_state.show_feedback:
+if "answered" not in st.session_state:
+    st.session_state.answered = False
+
+if not st.session_state.answered:
+    if st.button("回答！"):
+        st.session_state.answered = True
+        st.session_state.last_answer_correct = (answer == question["correct"])
+
+if st.session_state.answered:
     if st.session_state.last_answer_correct:
         st.success("✅ 正解！")
+        play_sound("correct.wav")
         st.markdown("""
             <style>
             @keyframes fadeInOut {
@@ -240,12 +267,16 @@ if st.session_state.show_feedback:
                 70% {opacity: 1; transform: scale(1.0);}
                 100% {opacity: 0; transform: scale(0.5);}
             }
-            .stamp {animation: fadeInOut 1.5s ease-in-out; text-align: center;}
+            .stamp {animation: fadeInOut 1.5s ease-in-out; text-align:center;}
             </style>
-            <div class="stamp"><img src="images/correct_stamp.png" width="200"></div>
+            <div class="stamp">
+                <img src="images/correct_stamp.png" width="200">
+            </div>
         """, unsafe_allow_html=True)
+        game.score += 1
     else:
         st.error(f"❌ 不正解！正解は「{question['correct']}」です。")
+        play_sound("wrong.wav")
         st.markdown("""
             <style>
             @keyframes fadeInOut {
@@ -254,16 +285,49 @@ if st.session_state.show_feedback:
                 70% {opacity: 1; transform: scale(1.0);}
                 100% {opacity: 0; transform: scale(0.5);}
             }
-            .stamp {animation: fadeInOut 1.5s ease-in-out; text-align: center;}
+            .stamp {animation: fadeInOut 1.5s ease-in-out; text-align:center;}
             </style>
-            <div class="stamp"><img src="images/wrong_stamp.png" width="200"></div>
+            <div class="stamp">
+                <img src="images/wrong_stamp.png" width="200">
+            </div>
         """, unsafe_allow_html=True)
 
-    # 1.5秒待ってから次の問題へ
-    import time
-    time.sleep(1.5)
+    # 「次の問題へ」ボタンを出す
+    if st.button("➡️ 次の問題へ"):
+        game.current_question += 1
+        st.session_state.answered = False
 
-    st.session_state.show_feedback = False
+        if game.current_question >= game.total_questions:
+            play_sound("fanfare.wav")
+            st.subheader("🎉 クイズ終了！")
+            st.write(f"あなたのスコアは {game.score}/{game.total_questions} 点！")
+
+            if game.score >= 9:
+                comment = "🌟 パーフェクト！世界マスター！"
+                image_path = game.result_images["perfect"]
+            elif game.score >= 6:
+                comment = "👍 よくできました！あと少しで満点！"
+                image_path = game.result_images["good"]
+            elif game.score >= 3:
+                comment = "🙂 まずまず！次はもっと高得点を目指そう！"
+                image_path = game.result_images["average"]
+            else:
+                comment = "💡 まだまだこれから！世界をもっと知ろう！"
+                image_path = game.result_images["low"]
+
+            st.image(image_path, width=400)
+            st.write(comment)
+
+            if st.button("🔁 もう一度遊ぶ"):
+                st.session_state.game = QuizGame(df)
+                st.session_state.answered = False
+                st.session_state.last_answer_correct = None
+                st.experimental_rerun()
+        else:
+            st.experimental_rerun()
+
+
+
     game.current_question += 1
 
     # クイズ終了時
